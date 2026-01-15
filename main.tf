@@ -4,7 +4,6 @@ module "vpc" {
   availability_zones = ["ap-south-1a", "ap-south-1b"]
 }
 
-
 module "security_groups" {
   source      = "./modules/security_groups"
   environment = var.environment
@@ -33,9 +32,15 @@ module "ecs_cluster" {
   enable_container_insights = false
 }
 
+module "ecr_repo" {
+  source       = "./modules/ecr"
+  environment  = var.environment
+  project_name = "oggy-app"
+}
+
 module "iam_role" {
-  source = "./modules/iam"
-  environment = var.environment
+  source             = "./modules/iam"
+  environment        = var.environment
   ecr_repository_arn = module.ecr_repo.repository_arn
 
   task_role_policy_arns = [
@@ -43,20 +48,16 @@ module "iam_role" {
   ]
 }
 
-module "ecr_repo" {
-  source = "./modules/ecr"
-  environment = var.environment
-  project_name = "oggy-app"
-}
-
-module "task_definition" {
-  source = "./modules/task_definition"
-  environment = var.environment
+module "backend_task_definition" {
+  source       = "./modules/task_definition"
+  environment  = var.environment
   project_name = "backend"
-  cpu = 256
+
+  cpu    = 256
   memory = 1024
+
+  task_execution_role_arn   = module.iam_role.ecs_execution_role_arn
   task_definition_role_arn = module.iam_role.ecs_task_role_arn
-  task_execution_role_arn = module.iam_role.ecs_execution_role_arn
 
   container_definitions = jsonencode([
     {
@@ -67,7 +68,6 @@ module "task_definition" {
       portMappings = [
         {
           containerPort = 5001
-          hostPort      = 5001
           protocol      = "tcp"
         }
       ]
@@ -85,10 +85,9 @@ module "task_definition" {
 }
 
 module "frontend_task_definition" {
-  source = "./modules/ecs-task-definition"
-
-  project_name = "frontend"
+  source       = "./modules/task_definition"
   environment  = var.environment
+  project_name = "frontend"
 
   cpu    = 256
   memory = 1024
@@ -105,7 +104,6 @@ module "frontend_task_definition" {
       portMappings = [
         {
           containerPort = 80
-          hostPort      = 80
           protocol      = "tcp"
         }
       ]
@@ -120,4 +118,42 @@ module "frontend_task_definition" {
       }
     }
   ])
+}
+
+module "ecs_service_backend" {
+  source        = "./modules/ecs_service"
+  service_name = "backend"
+  environment  = var.environment
+
+  cluster_arn         = module.ecs_cluster.ecs_cluster_arn
+  task_definition_arn = module.backend_task_definition.task_definition_arn
+
+  desired_count = 1
+  launch_type   = "FARGATE"
+
+  subnet_ids         = module.vpc.private_subnet_ids
+  security_group_ids = [module.security_groups.backend_sg_id]
+
+  target_group_arn = module.internal_alb.backend_target_group_arn
+  container_name   = "backend"
+  container_port   = 5001
+}
+
+module "ecs_service_frontend" {
+  source        = "./modules/ecs_service"
+  service_name = "frontend"
+  environment  = var.environment
+
+  cluster_arn         = module.ecs_cluster.ecs_cluster_arn
+  task_definition_arn = module.frontend_task_definition.task_definition_arn
+
+  desired_count = 1
+  launch_type   = "FARGATE"
+
+  subnet_ids         = module.vpc.private_subnet_ids
+  security_group_ids = [module.security_groups.frontend_sg_id]
+
+  target_group_arn = module.public_alb.frontend_target_group_arn
+  container_name   = "frontend"
+  container_port   = 80
 }
