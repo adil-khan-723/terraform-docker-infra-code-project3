@@ -8,3 +8,8 @@ variable "task_role_policy_arns" {
     type = list(string)
     default = []
 }
+
+variable "ci_principal_arn" {
+  description = "arn of the principal"
+  type = string
+}
