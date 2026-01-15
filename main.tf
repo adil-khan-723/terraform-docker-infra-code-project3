@@ -48,3 +48,76 @@ module "ecr_repo" {
   environment = var.environment
   project_name = "oggy-app"
 }
+
+module "task_definition" {
+  source = "./modules/task_definition"
+  environment = var.environment
+  project_name = "backend"
+  cpu = 256
+  memory = 1024
+  task_definition_role_arn = module.iam_role.ecs_task_role_arn
+  task_execution_role_arn = module.iam_role.ecs_execution_role_arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "backend"
+      image     = "${module.ecr_repo.repository_url}:backend-latest"
+      essential = true
+
+      portMappings = [
+        {
+          containerPort = 5001
+          hostPort      = 5001
+          protocol      = "tcp"
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = "/ecs/backend"
+          awslogs-region        = var.aws_region
+          awslogs-stream-prefix = "ecs"
+        }
+      }
+    }
+  ])
+}
+
+module "frontend_task_definition" {
+  source = "./modules/ecs-task-definition"
+
+  project_name = "frontend"
+  environment  = var.environment
+
+  cpu    = 256
+  memory = 1024
+
+  task_execution_role_arn   = module.iam_role.ecs_execution_role_arn
+  task_definition_role_arn = module.iam_role.ecs_task_role_arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "frontend"
+      image     = "${module.ecr_repo.repository_url}:frontend-latest"
+      essential = true
+
+      portMappings = [
+        {
+          containerPort = 80
+          hostPort      = 80
+          protocol      = "tcp"
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = "/ecs/frontend"
+          awslogs-region        = var.aws_region
+          awslogs-stream-prefix = "ecs"
+        }
+      }
+    }
+  ])
+}
