@@ -13,3 +13,8 @@ variable "ci_principal_arn" {
   description = "arn of the principal"
   type = string
 }
+
+variable "ecr_repository_arn" {
+  description = "arn of the ecr repo"
+  type = string
+}
