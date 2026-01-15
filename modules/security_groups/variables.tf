@@ -19,3 +19,15 @@ variable "backend_port" {
   description = "port at which backend containers listen"
   default     = 5001
 }
+
+variable "ssh_port" {
+  description = "ssh port"
+  type = number
+  default = 22
+}
+
+variable "jenkins_port" {
+  description = "jenkins port"
+  default = 8080
+  type = number
+}

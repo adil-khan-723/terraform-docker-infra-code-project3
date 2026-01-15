@@ -79,6 +79,30 @@ resource "aws_security_group_rule" "outbound_revoked" {
   protocol          = "-1"
 }
 
+resource "aws_security_group" "jenkins-ec2" {
+  name = "jenkins-ec2-sg"
+  description = "jenkins sg"
+  vpc_id = var.vpc_id
+}
+
+resource "aws_security_group_rule" "internal_alb_to_backend" {
+  type                     = "ingress"
+  from_port                = var.ssh_port
+  to_port                  = var.ssh_port
+  security_group_id        = aws_security_group.jenkins-ec2.id
+  cidr_blocks = ["0.0.0.0/0"]
+  protocol                 = "tcp"
+}
+
+resource "aws_security_group_rule" "internal_alb_to_backend" {
+  type                     = "ingress"
+  from_port                = var.jenkins_port
+  to_port                  = var.jenkins_port
+  security_group_id        = aws_security_group.jenkins-ec2.id
+  cidr_blocks = ["0.0.0.0/0"]
+  protocol                 = "tcp"
+}
+
 # # ########
 # ingress {
 #         description = "HTTP from the interenet"

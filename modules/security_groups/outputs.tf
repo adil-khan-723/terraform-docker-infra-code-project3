@@ -17,3 +17,8 @@ output "backend_sg_id" {
   description = "backend containers sg id"
   value       = aws_security_group.backend_sg.id
 }
+
+output "jenkins_sg_id" {
+  description = "jenkins sg id"
+  value = aws_security_group.jenkins-ec2.id
+}

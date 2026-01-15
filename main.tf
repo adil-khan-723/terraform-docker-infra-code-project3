@@ -157,3 +157,14 @@ module "ecs_service_frontend" {
   container_name   = "frontend"
   container_port   = 80
 }
+
+module "jenkins_ec2" {
+  source = "./modules/jenkins_ec2"
+  key_name = "oggy-key"
+  subnet_id = module.vpc.public_subnet_ids[0]
+  security_group_ids = [module.security_groups.jenkins_sg_id]
+  instance_profile_name = module.iam_role.jenkins_instance_profile_name
+  user_data = file("./scripts/install_jenkins.sh")
+  environment = var.environment
+  ami_id = data.aws_ami.ubuntu.id
+}
