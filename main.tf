@@ -37,3 +37,9 @@ module "iam_role" {
   source = "./modules/iam"
   environment = var.environment
 }
+
+module "ecr_repo" {
+  source = "./modules/ecr"
+  environment = var.environment
+  project_name = "oggy-app"
+}
