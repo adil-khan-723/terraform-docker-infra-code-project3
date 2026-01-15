@@ -45,3 +45,53 @@ resource "aws_iam_role_policy_attachment" "ecs_task_role_policy" {
   role = aws_iam_role.ecs_task_role.name
   policy_arn = each.value
 }
+
+resource "aws_iam_role" "ci_ecr_push_role" {
+  name = "ci-ecr-push-role-${var.environment}"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = {
+        AWS = var.ci_principal_arn
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+
+  tags = {
+    Environment = var.environment
+  }
+}
+resource "aws_iam_policy" "ci_ecr_push_policy" {
+  name = "ci-ecr-push-policy-${var.environment}"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:CompleteLayerUpload",
+          "ecr:InitiateLayerUpload",
+          "ecr:PutImage",
+          "ecr:UploadLayerPart"
+        ]
+        Resource = var.ecr_repository_arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ci_ecr_push_attachment" {
+  role = aws_iam_role.ci_ecr_push_role.name
+  policy_arn = aws_iam_policy.ci_ecr_push_policy.arn
+}

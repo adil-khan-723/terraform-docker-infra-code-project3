@@ -7,3 +7,8 @@ output "ecs_task_role_arn" {
     description = "arn of the task role"
     value = aws_iam_role.ecs_task_role.arn
 }
+
+output "ci_ecr_push_role_arn" {
+    description = "CI ECR push role ARN"
+    value = aws_iam_role.ci_ecr_push_role.arn
+}
