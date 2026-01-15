@@ -36,6 +36,11 @@ module "ecs_cluster" {
 module "iam_role" {
   source = "./modules/iam"
   environment = var.environment
+  ecr_repository_arn = module.ecr_repo.repository_arn
+
+  task_role_policy_arns = [
+    "arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+  ]
 }
 
 module "ecr_repo" {
