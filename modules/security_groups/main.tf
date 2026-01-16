@@ -70,14 +70,14 @@ resource "aws_security_group_rule" "internal_alb_to_backend" {
   protocol                 = "tcp"
 }
 
-resource "aws_security_group_rule" "outbound_revoked" {
-  type              = "egress"
-  from_port         = 0
-  to_port           = 0
-  cidr_blocks       = []
-  security_group_id = aws_security_group.backend_sg.id
-  protocol          = "-1"
-}
+# resource "aws_security_group_rule" "outbound_revoked" {
+#   type              = "egress"
+#   from_port         = 0
+#   to_port           = 0
+#   cidr_blocks       = []
+#   security_group_id = aws_security_group.backend_sg.id
+#   protocol          = "-1"
+# }
 
 resource "aws_security_group" "jenkins-ec2" {
   name = "jenkins-ec2-sg"
@@ -101,6 +101,15 @@ resource "aws_security_group_rule" "jenkins" {
   security_group_id        = aws_security_group.jenkins-ec2.id
   cidr_blocks = ["0.0.0.0/0"]
   protocol                 = "tcp"
+}
+
+resource "aws_security_group_rule" "outbound" {
+  type = "egress"
+  protocol = "-1"
+  cidr_blocks = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.jenkins-ec2.id
+  from_port = 0
+  to_port = 0
 }
 
 # # ########
