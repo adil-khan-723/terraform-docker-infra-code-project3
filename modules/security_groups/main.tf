@@ -85,7 +85,7 @@ resource "aws_security_group" "jenkins-ec2" {
   vpc_id = var.vpc_id
 }
 
-resource "aws_security_group_rule" "internal_alb_to_backend" {
+resource "aws_security_group_rule" "ssh" {
   type                     = "ingress"
   from_port                = var.ssh_port
   to_port                  = var.ssh_port
@@ -94,7 +94,7 @@ resource "aws_security_group_rule" "internal_alb_to_backend" {
   protocol                 = "tcp"
 }
 
-resource "aws_security_group_rule" "internal_alb_to_backend" {
+resource "aws_security_group_rule" "jenkins" {
   type                     = "ingress"
   from_port                = var.jenkins_port
   to_port                  = var.jenkins_port
