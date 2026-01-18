@@ -90,14 +90,52 @@ resource "aws_iam_role" "ci_ecr_push_role" {
   }
 }
 
+resource "aws_iam_policy" "terraform_read_policy" {
+  name = "terraform-read-policy-${var.environment}"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeImages",
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeRouteTables",
+          "ec2:DescribeAvailabilityZones",
+          "ec2:DescribeInternetGateways",
+          "ec2:DescribeNatGateways"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:GetRole",
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:DescribeRepositories"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 resource "aws_iam_policy" "ci_ecr_push_policy" {
   name = "ci-cd-policy-${var.environment}"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-
-      # --- S3 backend (Terraform state) ---
       {
         Effect = "Allow"
         Action = "s3:ListBucket"
@@ -117,8 +155,6 @@ resource "aws_iam_policy" "ci_ecr_push_policy" {
         ]
         Resource = "arn:aws:s3:::oggy-backend-bucket/terraform-docker-jenkins-ecs-project3/*"
       },
-
-      # --- DynamoDB state locking ---
       {
         Effect = "Allow"
         Action = [
@@ -129,8 +165,6 @@ resource "aws_iam_policy" "ci_ecr_push_policy" {
         ]
         Resource = "arn:aws:dynamodb:ap-south-1:736786104206:table/stateLock-table"
       },
-
-      # --- ECR push + pull ---
       {
         Effect = "Allow"
         Action = "ecr:GetAuthorizationToken"
@@ -149,8 +183,6 @@ resource "aws_iam_policy" "ci_ecr_push_policy" {
         ]
         Resource = var.ecr_repository_arn
       },
-
-      # --- ECS updates ---
       {
         Effect = "Allow"
         Action = [
@@ -164,8 +196,6 @@ resource "aws_iam_policy" "ci_ecr_push_policy" {
         ]
         Resource = "*"
       },
-
-      # --- ALB / Target Groups ---
       {
         Effect = "Allow"
         Action = [
@@ -178,8 +208,6 @@ resource "aws_iam_policy" "ci_ecr_push_policy" {
         ]
         Resource = "*"
       },
-
-      # --- Required for ECS ---
       {
         Effect = "Allow"
         Action = "iam:PassRole"
@@ -192,9 +220,14 @@ resource "aws_iam_policy" "ci_ecr_push_policy" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "ci_ecr_push_attachment" {
+resource "aws_iam_role_policy_attachment" "ci_cd_policy_attachment" {
   role       = aws_iam_role.ci_ecr_push_role.name
   policy_arn = aws_iam_policy.ci_ecr_push_policy.arn
+}
+
+resource "aws_iam_role_policy_attachment" "terraform_read_policy_attachment" {
+  role       = aws_iam_role.ci_ecr_push_role.name
+  policy_arn = aws_iam_policy.terraform_read_policy.arn
 }
 
 resource "aws_iam_policy" "jenkins_assume_ci_role" {
