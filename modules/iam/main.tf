@@ -110,7 +110,8 @@ resource "aws_iam_policy" "ci_ecr_push_policy" {
           "ecr:CompleteLayerUpload",
           "ecr:InitiateLayerUpload",
           "ecr:PutImage",
-          "ecr:UploadLayerPart"
+          "ecr:UploadLayerPart",
+          "ecr:BatchGetImage"
         ]
         Resource = var.ecr_repository_arn
       }
