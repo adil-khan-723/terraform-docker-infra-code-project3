@@ -159,6 +159,7 @@ module "ecs_service_frontend" {
 }
 
 module "jenkins_ec2" {
+  instance_type = "t3.small"
   source = "./modules/jenkins_ec2"
   key_name = "oggy-key"
   subnet_id = module.vpc.public_subnet_ids[0]
