@@ -100,12 +100,10 @@ resource "aws_iam_policy" "terraform_read_policy" {
         Effect = "Allow"
         Action = [
           "ec2:DescribeImages",
-          "ec2:DescribeInstances",
           "ec2:DescribeVpcs",
           "ec2:DescribeVpcAttribute",
           "ec2:DescribeSubnets",
           "ec2:DescribeSecurityGroups",
-          "ec2:DescribeSecurityGroupRules",
           "ec2:DescribeRouteTables",
           "ec2:DescribeAvailabilityZones",
           "ec2:DescribeInternetGateways",
@@ -116,12 +114,11 @@ resource "aws_iam_policy" "terraform_read_policy" {
       {
         Effect = "Allow"
         Action = [
-          "elasticloadbalancing:DescribeLoadBalancers",
-          "elasticloadbalancing:DescribeLoadBalancerAttributes",
-          "elasticloadbalancing:DescribeTargetGroups",
-          "elasticloadbalancing:DescribeTargetGroupAttributes",
-          "elasticloadbalancing:DescribeListeners",
-          "elasticloadbalancing:DescribeTargetHealth"
+          "iam:GetRole",
+          "iam:GetPolicy",
+          "iam:GetInstanceProfile",
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies"
         ]
         Resource = "*"
       },
@@ -129,20 +126,7 @@ resource "aws_iam_policy" "terraform_read_policy" {
         Effect = "Allow"
         Action = [
           "ecr:DescribeRepositories",
-          "ecr:GetLifecyclePolicy",
           "ecr:ListTagsForResource"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "iam:GetRole",
-          "iam:GetPolicy",
-          "iam:GetPolicyVersion",
-          "iam:GetInstanceProfile",
-          "iam:ListRolePolicies",
-          "iam:ListAttachedRolePolicies"
         ]
         Resource = "*"
       }
@@ -150,7 +134,7 @@ resource "aws_iam_policy" "terraform_read_policy" {
   })
 }
 
-resource "aws_iam_policy" "ci_cd_policy" {
+resource "aws_iam_policy" "ci_ecr_push_policy" {
   name = "ci-cd-policy-${var.environment}"
 
   policy = jsonencode({
@@ -199,7 +183,8 @@ resource "aws_iam_policy" "ci_cd_policy" {
           "ecr:PutImage",
           "ecr:UploadLayerPart",
           "ecr:BatchGetImage",
-          "ecr:GetDownloadUrlForLayer"
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:ListTagsForResource"
         ]
         Resource = var.ecr_repository_arn
       },
@@ -218,10 +203,23 @@ resource "aws_iam_policy" "ci_cd_policy" {
       },
       {
         Effect = "Allow"
+        Action = [
+          "elasticloadbalancing:RegisterTargets",
+          "elasticloadbalancing:DeregisterTargets",
+          "elasticloadbalancing:DescribeTargetGroups",
+          "elasticloadbalancing:DescribeTargetHealth",
+          "elasticloadbalancing:DescribeListeners",
+          "elasticloadbalancing:DescribeLoadBalancers"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
         Action = "iam:PassRole"
         Resource = [
           "arn:aws:iam::736786104206:role/ecs-task-execution-role-*",
-          "arn:aws:iam::736786104206:role/ecs-task-role-*"
+          "arn:aws:iam::736786104206:role/ecs-task-role-*",
+          "arn:aws:iam::736786104206:role/jenkins-ec2-role-*"
         ]
       }
     ]
@@ -230,7 +228,7 @@ resource "aws_iam_policy" "ci_cd_policy" {
 
 resource "aws_iam_role_policy_attachment" "ci_cd_policy_attachment" {
   role       = aws_iam_role.ci_ecr_push_role.name
-  policy_arn = aws_iam_policy.ci_cd_policy.arn
+  policy_arn = aws_iam_policy.ci_ecr_push_policy.arn
 }
 
 resource "aws_iam_role_policy_attachment" "terraform_read_policy_attachment" {
