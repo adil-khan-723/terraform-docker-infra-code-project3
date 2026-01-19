@@ -91,49 +91,16 @@ resource "aws_iam_role" "ci_ecr_push_role" {
 }
 
 resource "aws_iam_policy" "ci_ecr_push_policy" {
-  name = "ci-cd-policy-${var.environment}"
+  name = "ci-ecr-push-policy-${var.environment}"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
-
-      # --- S3 backend (Terraform state) ---
-      {
-        Effect = "Allow"
-        Action = "s3:ListBucket"
-        Resource = "arn:aws:s3:::oggy-backend-bucket"
-        Condition = {
-          StringLike = {
-            "s3:prefix" = "terraform-docker-jenkins-ecs-project3/*"
-          }
-        }
-      },
       {
         Effect = "Allow"
         Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject"
+          "ecr:GetAuthorizationToken"
         ]
-        Resource = "arn:aws:s3:::oggy-backend-bucket/terraform-docker-jenkins-ecs-project3/*"
-      },
-
-      # --- DynamoDB state locking ---
-      {
-        Effect = "Allow"
-        Action = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:DeleteItem",
-          "dynamodb:UpdateItem"
-        ]
-        Resource = "arn:aws:dynamodb:ap-south-1:736786104206:table/stateLock-table"
-      },
-
-      # --- ECR push + pull ---
-      {
-        Effect = "Allow"
-        Action = "ecr:GetAuthorizationToken"
         Resource = "*"
       },
       {
@@ -144,49 +111,9 @@ resource "aws_iam_policy" "ci_ecr_push_policy" {
           "ecr:InitiateLayerUpload",
           "ecr:PutImage",
           "ecr:UploadLayerPart",
-          "ecr:BatchGetImage",
-          "ecr:GetDownloadUrlForLayer"
+          "ecr:BatchGetImage"
         ]
         Resource = var.ecr_repository_arn
-      },
-
-      # --- ECS updates ---
-      {
-        Effect = "Allow"
-        Action = [
-          "ecs:RegisterTaskDefinition",
-          "ecs:DeregisterTaskDefinition",
-          "ecs:DescribeServices",
-          "ecs:DescribeTaskDefinition",
-          "ecs:UpdateService",
-          "ecs:CreateService",
-          "ecs:DeleteService"
-        ]
-        Resource = "*"
-      },
-
-      # --- ALB / Target Groups ---
-      {
-        Effect = "Allow"
-        Action = [
-          "elasticloadbalancing:RegisterTargets",
-          "elasticloadbalancing:DeregisterTargets",
-          "elasticloadbalancing:DescribeTargetGroups",
-          "elasticloadbalancing:DescribeTargetHealth",
-          "elasticloadbalancing:DescribeListeners",
-          "elasticloadbalancing:DescribeLoadBalancers"
-        ]
-        Resource = "*"
-      },
-
-      # --- Required for ECS ---
-      {
-        Effect = "Allow"
-        Action = "iam:PassRole"
-        Resource = [
-          "arn:aws:iam::736786104206:role/ecs-task-execution-role-*",
-          "arn:aws:iam::736786104206:role/ecs-task-role-*"
-        ]
       }
     ]
   })
