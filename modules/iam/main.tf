@@ -101,7 +101,6 @@ resource "aws_iam_policy" "terraform_read_policy" {
         Action = [
           "ec2:DescribeImages",
           "ec2:DescribeVpcs",
-          "ec2:DescribeVpcAttribute",
           "ec2:DescribeSubnets",
           "ec2:DescribeSecurityGroups",
           "ec2:DescribeRouteTables",
@@ -115,8 +114,6 @@ resource "aws_iam_policy" "terraform_read_policy" {
         Effect = "Allow"
         Action = [
           "iam:GetRole",
-          "iam:GetPolicy",
-          "iam:GetInstanceProfile",
           "iam:ListRolePolicies",
           "iam:ListAttachedRolePolicies"
         ]
@@ -125,8 +122,7 @@ resource "aws_iam_policy" "terraform_read_policy" {
       {
         Effect = "Allow"
         Action = [
-          "ecr:DescribeRepositories",
-          "ecr:ListTagsForResource"
+          "ecr:DescribeRepositories"
         ]
         Resource = "*"
       }
@@ -183,8 +179,7 @@ resource "aws_iam_policy" "ci_ecr_push_policy" {
           "ecr:PutImage",
           "ecr:UploadLayerPart",
           "ecr:BatchGetImage",
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:ListTagsForResource"
+          "ecr:GetDownloadUrlForLayer"
         ]
         Resource = var.ecr_repository_arn
       },
@@ -218,8 +213,7 @@ resource "aws_iam_policy" "ci_ecr_push_policy" {
         Action = "iam:PassRole"
         Resource = [
           "arn:aws:iam::736786104206:role/ecs-task-execution-role-*",
-          "arn:aws:iam::736786104206:role/ecs-task-role-*",
-          "arn:aws:iam::736786104206:role/jenkins-ec2-role-*"
+          "arn:aws:iam::736786104206:role/ecs-task-role-*"
         ]
       }
     ]
