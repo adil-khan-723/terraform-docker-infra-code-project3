@@ -108,13 +108,6 @@ module "frontend_task_definition" {
         }
       ]
 
-      environment = [
-        {
-          name  = "BACKEND_INTERNAL_ALB"
-          value = "http://${module.internal_alb.internal_alb_dns_name}"
-        }
-      ]
-
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -166,13 +159,13 @@ module "ecs_service_frontend" {
 }
 
 module "jenkins_ec2" {
-  instance_type         = "t3.small"
-  source                = "./modules/jenkins_ec2"
-  key_name              = "oggy-key"
-  subnet_id             = module.vpc.public_subnet_ids[0]
-  security_group_ids    = [module.security_groups.jenkins_sg_id]
+  instance_type = "t3.small"
+  source = "./modules/jenkins_ec2"
+  key_name = "oggy-key"
+  subnet_id = module.vpc.public_subnet_ids[0]
+  security_group_ids = [module.security_groups.jenkins_sg_id]
   instance_profile_name = module.iam_role.jenkins_instance_profile_name
-  user_data             = file("./install_jenkins.sh")
-  environment           = var.environment
-  ami_id                = data.aws_ami.ubuntu.id
+  user_data = file("./install_jenkins.sh")
+  environment = var.environment
+  ami_id = data.aws_ami.ubuntu.id
 }
