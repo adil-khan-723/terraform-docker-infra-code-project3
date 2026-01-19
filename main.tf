@@ -62,7 +62,7 @@ module "backend_task_definition" {
   container_definitions = jsonencode([
     {
       name      = "backend"
-      image     = "${module.ecr_repo.repository_url}:${var.backend_image_tag}"
+      image     = "${module.ecr_repo.repository_url}:backend-${var.backend_image_tag}"
       essential = true
 
       portMappings = [
@@ -98,7 +98,7 @@ module "frontend_task_definition" {
   container_definitions = jsonencode([
     {
       name      = "frontend"
-      image     = "${module.ecr_repo.repository_url}:${var.frontend_image_tag}"
+      image     = "${module.ecr_repo.repository_url}:frontend-${var.frontend_image_tag}"
       essential = true
 
       portMappings = [
